@@ -1,0 +1,138 @@
+\documentclass[12pt]{article}
+
+\usepackage[spanish]{babel}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage[a4paper, total={6.5in, 10in}]{geometry}
+\usepackage[framemethod=TikZ]{mdframed}
+\usepackage{bm}
+\usepackage{mathrsfs}
+\usepackage{dsfont}
+\usepackage{fancyhdr}
+\usepackage{bm}
+\usepackage{enumitem}
+\usepackage{dsfont}
+
+\usepackage{mdframed}
+\usepackage{lipsum}
+
+\newmdtheoremenv{lema}{Lema}
+
+\newenvironment{demostracion}{\noindent\textit{Demostración: } $ $ \newline }{\newline\qed}
+
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\RR}{\rm I\!R}
+\newcommand{\NN}{{\rm I\!N}}
+\newcommand{\CC}{$\mathds{C}$}
+\newcommand{\QQ}{${\mathds{Q}}$}
+\newcommand{\KK}{{\rm I\!K}}
+\newcommand{\ZZ}{$\mathds{Z}$}
+\newcommand{\abs}[1]{\left|#1\right|}
+
+\title{\textbf{Splines cúbicos periódicos}}
+\date{}
+\begin{document}
+\maketitle
+\noindent
+\begin{mdframed}
+	Sea $x_0 < x_1 < \dots < x_n$ una partición del intervalo $[x_0, x_n]$ $(n\geq 3)$, y valores de una función en todos los nodos de dicha partición salvo en el último $f_0, f_1,\dots,f_{n-1}$. Queremos construir un spline cúbico que interpole dichos datos con la condición de periodicidad, \textit{i.e.}, si $S(x)$ es el spline que buscamos, 
+	$$S(x_0) = S(x_n) = f_0 \quad S'(x_0) = S'(x_n) \quad S''(x_0) = S''(x_n)$$
+\end{mdframed}
+
+Supongamos 
+$$S(x) = \begin{cases}
+	s_1(x) & \textrm{ si } x\in [x_0, x_1) \\ 
+	s_2(x) & \textrm{ si } x\in [x_1, x_2) \\ 
+	\vdots & \vdots \\ 
+	s_n(x) & \textrm{ si } x \in [x_{n-1}, x_n]
+\end{cases}$$
+
+Para cada $i =  1, \dots, n$ calculamos los coeficientes del polinomio cúbico $s_i$ mediante la correspondiente tabla de diferencias dividas en el intervalo $[x_{i-1}, x_i]$:
+
+\begin{center}
+	\begin{tabular}{c | c c c c}
+		$x$ & $f[x_{i-1}^*]$ & $f[x_{i-1}^*, x_i^*]$ & $f[x_{i-1}^*, x_i^*, x_{i + 1}^*]$ & $f[x_{i-1}^*, x_i^*, x_{i+1}^*, x_{i+2}^*]$ \\
+		\hline
+		$x_{i-1}$ & $f_{i-1}$ & 0 & 0 & 0 \\ 
+		$x_{i-1}$ & $f_{i-1}$ & $H_{i-1}'$ & 0 & 0 \\ 
+		$x_i$ & $f_i$ & $\frac{f_i - f_{i-1}}{x_i - x_{i-1}}$ & $\frac{H[x_{i-1}, x_i] - H_{i-1}'}{(x_i - x_{i-1})}$ & 0 \\ 
+		$x_i$ & $f_i$ & $H_i'$ & $\frac{  H_{i}' - H[x_{i-1}, x_i]}{(x_i - x_{i-1})}$ & $\frac{H_i' - 2 H [x_{i-1}, x_i] + H_{i-1}'}{(x_i - x_{i-1})^2} $
+	\end{tabular}
+\end{center}
+con $H[x_{i-1}, x_i] = \frac{f_i - f_{i-1}}{x_i - x_{i-1}}$. Así, la expresión de $s_i$ resulta en
+
+$$s_i(x) = f_{i-1} + H_{i-1}'(x-x_{i-1}) + \frac{H[x_{i-1}, x_i] - H_{i-1}'}{(x_i - x_{i-1})} (x-x_{i-1})^2 + \frac{H_i' - 2 H [x_{i-1}, x_i] + H_{i-1}'}{(x_i - x_{i-1})^2} (x - x_{i-1})^2 (x - x_i) $$
+
+Con esta construcción ya tenemos asegurada la continuidad y la continuidad $\mathscr{C}^1$ en los nodos de la partición. Falta imponer la condición de continuidad $\mathscr{C}^2$ y las condiciones de periodicidad. Para ello vamos a expresar cada $s_i(x)$ con $i=1,\dots, n$ en la base de Taylor con respecto al nodo $x_{i-1}$. Notamos que 
+
+\begin{multline*}
+	\frac{H_i' - 2 H [x_{i-1}, x_i] + H_{i-1}'}{(x_i - x_{i-1})^2} (x - x_{i-1})^2 (x - x_i) \\ = \frac{H_i' - 2 H [x_{i-1}, x_i] + H_{i-1}'}{(x_i - x_{i-1})^2} (x - x_{i-1})^2 (x - x_{i-1} + x_{i-1} - x_i) 
+	\\ = \frac{H_i' - 2 H [x_{i-1}, x_i] + H_{i-1}'}{(x_i - x_{i-1})^2} (x - x_{i-1})^3 - \frac{H_i' - 2 H [x_{i-1}, x_i] + H_{i-1}'}{(x_i - x_{i-1})} (x - x_{i-1})^2
+\end{multline*}
+y agrupando términos
+\begin{align*}
+	s_i(x) = f_{i-1} &+ H_{i-1}' (x - x_i) + \frac{3 H [x_{i-1}, x_i] -2 H_{i-1}' - H_i'}{x_i - x_{i-1}} ( x-x_{i-1})^2 \\ &+ \frac{H_{i-1}' - 2 H[x_{i-1}, x_i] + H_i'}{(x_i - x_{i-1})^2} (x - x_{i-1})^3
+\end{align*}
+Derivando dos veces obtenemos para cada $i = 1,\dots, n$
+$$s_i''(x) = 2 \frac{3 H [x_{i-1}, x_i] -2 H_{i-1}' - H_i'}{x_i - x_{i-1}} + 6\frac{H_{i-1}' - 2 H[x_{i-1}, x_i] + H_i'}{(x_i - x_{i-1})^2} (x - x_{i-1}) $$
+
+
+Ahora imponemos la condición de continuidad $\mathscr{C}^2$ en los nodos $x_i$ con $ i = 1, \dots, n - 1$:
+\begin{align*}
+	s_i''(x_i) &= \frac{4 H_i' + 2 H_{i - 1}' - 6 H[x_{i-1}, x_i]}{x_i - x_{i-1}} \\
+	s_{i+1}''(x_i) &= \frac{6 H[x_i, x_{i+1}] - 4 H_i' - 2H_{i+1}'}{x_{i+1}- x_i}
+\end{align*}
+e igualando se obtiene que 
+$$\frac{H_{i-1}'}{h_i} + \left(\frac{2}{h_{i}} + \frac{2}{h_{i+1}}\right) H_i' + \frac{H_{i+1}'}{h_{i+1}} = 3 \left[\frac{H[x_{i-1} + x_i]}{h_i} + \frac{H[x_i, x_{i+1}]}{h_{i+1}}\right] \quad i = 1, 2, \dots, n - 1$$
+
+En cuanto a las condiciones de frontera, por construcción se cumple que $s_1(x_0) = s_n(x_n)$ y $s_1''(x_0) = s_n'(x_n)$, falta ver la continuidad $\mathscr{C}^2$. Haciendo $s_1''(x_0) = s_n''(x_n)$ se tiene que 
+$$\frac{H_0'}{h_1} + \left(\frac{2}{h_0} + \frac{2}{h_1}\right) H_1' + \frac{H_{n-1}'}{h_{n}} = 3\left[\frac{H[x_0, x_1]}{h_1} + \frac{H[x_{n-1}, x_n]}{h_n}\right]$$ 
+en forma matricial el sistema es, poniendo $d_i = H[x_{i-1}, x_i]$, 
+
+$$\begin{bmatrix}
+	\frac{2}{h_1} + \frac{2}{h_n} & \frac{1}{h_1} & 0 & \dots & \dots & 0 & \frac{1}{h_n} \\
+	\frac{1}{h_1} & \frac{2}{h_1} + \frac{2}{h_2} & \frac{1}{h_2} & \dots & \dots & 0 & 0 \\
+	\vdots & \ddots & \ddots & \ddots & \vdots & \vdots & \vdots \\
+	0 & \dots & \frac{1}{h_i} & \frac{2}{h_i} + \frac{2}{h_{i+1}} & \frac{1}{h_{i+1}} & \dots & 0 \\
+	\vdots & \vdots & \vdots & \ddots & \ddots & \ddots & \vdots \\
+	0 & 0 & \dots & \dots & \frac{1}{h_{n-2}} &  \frac{2}{h_{n-1}} + \frac{2}{h_{n-1}} & \frac{1}{h_{n-1}} \\
+	
+	\frac{1}{h_n} & 0 & \dots & \dots & 0 &  \frac{1}{h_{n-1}} & \frac{2}{h_{n-1}} + \frac{2}{h_n}
+	
+\end{bmatrix} \begin{bmatrix}
+
+H_0' \\ H_1' \\ \vdots  \\ H_i' \\ \vdots \\ \vdots \\ H_{n-1'}
+\end{bmatrix} = \begin{bmatrix}
+3\left(\frac{d_1}{h_1} + \frac{d_n}{h_n}\right) \\
+3 \left(\frac{d_1}{h_1} + \frac{d_2}{h_{2}}\right) \\ \vdots \\ 
+3 \left(\frac{d_i}{h_i} + \frac{d_{i+1}}{h_{i+1}}\right) \\ 
+\vdots \\ 3\left(\frac{d_{n-2}}{h_{n-2}} + \frac{d_{n-1}}{h_{n-1}}\right) \\ 
+
+3\left(\frac{d_{n-1}}{h_{n-1}} + \frac{d_{n}}{h_{n}}\right)
+
+\end{bmatrix}$$
+
+La matriz de coeficientes del sistema anterior es \textit{estrictamente diagonalmente dominante} pues $\frac{2}{h_i} + \frac{2}{h_{i+1}} \geq \frac{1}{h_i} + \frac{1}{h_{i+1}}$ e igual para el primer y último elemento de la diagonal principal. Veamos que esta matriz es regular, para ello probamos el siguiente lema.
+
+\newpage
+\begin{lema}
+	Toda matriz \textit{estrictamente diagonalmente dominante} es regular
+\end{lema}
+
+\begin{demostracion}
+	Sea $A = (a_{ij})\in \mathcal{M}_n(\RR)$ una matriz estrictamente diagonalmente dominante, supongamos por reducción a lo absurdo que la matriz no es regular, luego existe $\bm{v} \in {\RR}^n\setminus\{\bm{0}\}$ tal que $A\bm{v} = \bm{0}$. Si ponemos $\bm{v} = (v_1, \dots, v_n)$, sea $v_i$ la componente de mayor valor absoluto, se tiene que para cada $i = 1,\dots,n$
+	$$0 = \sum_{j = 1}^{n} a_{ij} v_j \iff -a_{ii} v_i = a_{i1} v_1 +\dots + a_{i, i-1}v_{i-1} + a_{i, i+1}v_{i+1} + \dots + a_{in} v_n$$
+	y por tanto
+	$$\abs{a_{ii} v_i} \leq \abs{a_{i1} v_1} +\dots + \abs{a_{i, i-1}v_{i-1}} + \abs{a_{i, i+1}v_{i+1}} + \dots + \abs{ a_{in} v_n}$$
+	que dividiendo por $\abs{v_i}$ resulta en
+	$$\abs{a_{ii}} \leq \frac{\abs{a_{i1} || v_1}}{\abs{v_i}} +\dots + \frac{\abs{a_{i, i-1} || v_{i-1}}}{\abs{v_i}} + \frac{\abs{a_{i, i+1}||v_{i+1}}}{\abs{v_i}} + \dots + \frac{\abs{ a_{in}|| v_n}}{\abs{v_i}}$$
+	como $\frac{\abs{v_j}}{\abs{v_i}} \leq 1$ para cada $j=1,\dots, n$ por la elección de $v_i$ se tiene que el elemento diagonal $a_{ii}$ no excede la suma de los módulos de los elementos restantes de su columna lo cual es absurdo. Así, $A$ es regular.
+\end{demostracion}
+
+Tenemos que la matriz del sistema es regular y de dimensión $n\times n$ luego en virtud del teorema de Rouche-Frobenius el sistema tiene una única solución.
+\end{document}
